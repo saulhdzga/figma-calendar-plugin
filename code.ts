@@ -1,34 +1,32 @@
 figma.showUI(__html__, { width: 340, height: 620 });
 
-
 async function main() {
   // Start the loading state
-  figma.ui.postMessage({ type: 'loading', status: true });
+  figma.ui.postMessage({ type: "loading", status: true });
 
   try {
     // Perform the font loading
     await loadFonts();
-    console.log("loaded fonts!")
+    console.log("loaded fonts!");
     // Post-loading actions
     // ...
   } catch (error) {
     console.error("Error loading fonts:", error);
-    figma.ui.postMessage({ type: 'error', message: 'Failed to load fonts.' });
+    figma.ui.postMessage({ type: "error", message: "Failed to load fonts." });
   } finally {
     // End the loading state
-    figma.ui.postMessage({ type: 'loading', status: false });
+    figma.ui.postMessage({ type: "loading", status: false });
   }
 }
 
 main();
 
-
-figma.ui.onmessage = msg => {
+figma.ui.onmessage = (msg) => {
   if (figma.currentPage.selection.length < 1) {
     figma.notify("Please select a calendar :)");
   } else {
-    if (msg.type === 'create-calendar') {
-      updateCalendar(msg.month, msg.year, msg.weekStart)
+    if (msg.type === "create-calendar") {
+      updateCalendar(msg.month, msg.year, msg.weekStart);
     }
   }
 };
@@ -39,7 +37,9 @@ const fallbackFonts = [
 ];
 
 async function loadFonts() {
-  const textNodes = figma.currentPage.findAll(node => node.type === 'TEXT') as TextNode[];
+  const textNodes = figma.currentPage.findAll(
+    (node) => node.type === "TEXT"
+  ) as TextNode[];
 
   for (const textNode of textNodes) {
     const fontName = textNode.fontName;
@@ -48,7 +48,7 @@ async function loadFonts() {
       try {
         await figma.loadFontAsync(fontName);
       } catch (error) {
-        console.error('Error loading font:', fontName, '; Error:', error);
+        console.error("Error loading font:", fontName, "; Error:", error);
         // Try loading fallback fonts
         for (const fallbackFont of fallbackFonts) {
           try {
@@ -56,7 +56,12 @@ async function loadFonts() {
             console.log(`Fallback font loaded: ${fallbackFont.family}`);
             break; // Exit loop once a fallback font is loaded
           } catch (fallbackError) {
-            console.error('Error loading fallback font:', fallbackFont, '; Error:', fallbackError);
+            console.error(
+              "Error loading fallback font:",
+              fallbackFont,
+              "; Error:",
+              fallbackError
+            );
           }
         }
       }
@@ -64,10 +69,21 @@ async function loadFonts() {
   }
 }
 
-
 function updateCalendar(month: number, year: number, weekStart: number) {
-  const monthNames = ["January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"];
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
 
   const daysInMonth = new Date(year, month, 0).getDate();
 
@@ -79,16 +95,19 @@ function updateCalendar(month: number, year: number, weekStart: number) {
   let day = 1;
   let prevMonthDay = daysInPreviousMonth - firstDayOfWeek + 1;
 
-  const headerNode = figma.currentPage.selection[0].findAll((node: any) =>
-    node.type === 'TEXT' && node.name === 'Month YYYY'
+  const headerNode = (figma.currentPage.selection[0] as FrameNode).findAll(
+    (node: any) => node.type === "TEXT" && node.name === "Month YYYY"
   ) as TextNode[];
 
   if (headerNode.length > 0) {
     headerNode[0].characters = `${monthNames[month - 1]} ${year}`;
   }
 
-  const textNodes = figma.currentPage.selection[0].findAll((node: any) =>
-    node.type === 'TEXT' && node.parent && node.parent.name === '.calendar-day'
+  const textNodes = (figma.currentPage.selection[0] as FrameNode).findAll(
+    (node: any) =>
+      node.type === "TEXT" &&
+      node.parent &&
+      node.parent.name === ".calendar-day"
   ) as TextNode[];
 
   if (textNodes.length < 1) {
@@ -97,11 +116,9 @@ function updateCalendar(month: number, year: number, weekStart: number) {
     textNodes.forEach((textNode: TextNode, index: number) => {
       if (index < firstDayOfWeek) {
         textNode.characters = `${prevMonthDay++}`;
-      }
-      else if (day <= daysInMonth) {
+      } else if (day <= daysInMonth) {
         textNode.characters = `${day++}`;
-      }
-      else {
+      } else {
         textNode.characters = `${index - firstDayOfWeek - daysInMonth + 1}`;
       }
     });
@@ -109,15 +126,7 @@ function updateCalendar(month: number, year: number, weekStart: number) {
   }
 }
 
-
-
-
-
 function getDayName(dayIndex: number) {
-  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
   return days[dayIndex];
 }
-
-
-
-
