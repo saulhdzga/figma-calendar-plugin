@@ -86,14 +86,8 @@ function updateCalendar(month: number, year: number, weekStart: number) {
   ];
 
   const daysInMonth = new Date(year, month, 0).getDate();
-
-  let firstDayOfWeek = new Date(year, month - 1, 1).getDay();
-
-  firstDayOfWeek = (firstDayOfWeek - weekStart + 7) % 7;
-
-  const daysInPreviousMonth = new Date(year, month - 1, 0).getDate();
-  let day = 1;
-  let prevMonthDay = daysInPreviousMonth - firstDayOfWeek + 1;
+  const firstDayOfWeek =
+    (new Date(year, month - 1, 1).getDay() - weekStart + 7) % 7;
 
   const headerNode = (figma.currentPage.selection[0] as FrameNode).findAll(
     (node: any) => node.type === "TEXT" && node.name === "Month YYYY"
@@ -109,24 +103,60 @@ function updateCalendar(month: number, year: number, weekStart: number) {
       node.parent &&
       node.parent.name === ".calendar-day"
   ) as TextNode[];
-
   if (textNodes.length < 1) {
     figma.notify("Can't find any layers named '.calendar-day' :(");
-  } else {
-    textNodes.forEach((textNode: TextNode, index: number) => {
-      if (index < firstDayOfWeek) {
-        textNode.characters = `${prevMonthDay++}`;
-      } else if (day <= daysInMonth) {
-        textNode.characters = `${day++}`;
-      } else {
-        textNode.characters = `${index - firstDayOfWeek - daysInMonth + 1}`;
-      }
-    });
-    figma.notify("Updated calendar 🎉");
+    return;
   }
+
+  const monthButton = (figma.currentPage.selection[0] as FrameNode).findAll(
+    (node: any) =>
+      node.name === "MONTH_BUTTON" &&
+      node.parent &&
+      node.parent.name === "MONTH_SELECTOR"
+  ) as InstanceNode[];
+  if (monthButton.length < 1) {
+    figma.notify("Can't find any layers named 'MONTH_BUTTON_V2' :(");
+    return;
+  }
+  monthButton.forEach((button, index) => {
+    button.setProperties({
+      SELECTED: index % 12 === month - 1 ? "TRUE" : "FALSE",
+    });
+  });
+
+  console.log(monthButton.length);
+  console.log(month);
+
+  const dayNameNodes = (figma.currentPage.selection[0] as FrameNode).findAll(
+    (node: any) =>
+      node.type === "TEXT" &&
+      node.parent &&
+      node.parent.name === ".calendar-day-name"
+  ) as TextNode[];
+  if (dayNameNodes.length < 1) {
+    //figma.notify("Can't find any layers named '.calendar-day-name' :(");
+  }
+
+  textNodes.forEach((textNode: TextNode, index: number) => {
+    const date = new Date(year, month - 1, index - firstDayOfWeek + 1);
+    textNode.characters = `${date.getDate()}`;
+    if (dayNameNodes[index]) {
+      dayNameNodes[index].characters = getDayName(date.getDay());
+    }
+  });
+
+  figma.notify("Updated calendar");
 }
 
 function getDayName(dayIndex: number) {
-  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const days = [
+    "Domingo",
+    "Lunes",
+    "Martes",
+    "Miércoles",
+    "Jueves",
+    "Viernes",
+    "Sábado",
+  ];
   return days[dayIndex];
 }
